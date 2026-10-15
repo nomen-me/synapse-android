@@ -29,13 +29,9 @@ Endpoints extraídos de `SYNAPSE_CONFIG`, `Ritmo`, `Harmonia` e das funções de
 | Pedidos — cancelar | `POST harmonia/webhook/lyra/alterar {tipo:"pedidos",id,instrucao}` (o app não cancela; só Lojista/Administrador; sem retry) | IMPLEMENTADO |
 | Pedidos — situação do envio | `POST harmonia/webhook/envio/situacao {pedidoId}` | IMPLEMENTADO (workflow depende do W2 no Harmonia) |
 | Pedidos — criar venda/compra | `POST ritmo/api/resource/Sales Order` / `Purchase Order` (company via POS Profile ou Company única) | IMPLEMENTADO (campos de Compra seguem a premissa do painel, não confirmada em Ritmo real) |
-| PDV — PIN offline (PBKDF2-SHA256, compatível com o painel), bloqueio 5 erros/60 s | `PinCrypto`, `PinLockout`; `POST ritmo/api/method/synapse_definir_pin` | MOTOR IMPLEMENTADO (tela pendente) |
-| PDV — autorização offline do caixa | `GET ritmo/api/method/synapse_sincronizar_caixa?pos_profile=` → `message.usuarios_autorizados` | MOTOR IMPLEMENTADO (tela pendente) |
-| PDV — fila offline (SQLite) e sincronização idempotente (`synapse_op_id`) | `POS Opening Entry`, `POS Invoice`, `POS Closing Entry`, `Sales Order`/`Customer` (pedido_venda), `Synapse Producao Item` (+ `producao_status`) | MOTOR IMPLEMENTADO e coberto por testes JVM escritos (não executados); tela pendente |
-| PDV — catálogo, carrinho, descontos/acréscimos, abertura/fechamento de caixa, finalizar venda (telas) | cálculo de ajustes já portado (`valorItemComAjuste`) | PENDENTE |
-| PDV — NFC-e, cobrança Pix (InfinitePay), número WhatsApp | `fiscal/emitir-nfce`, `pagamentos/pdv/criar-cobranca`, `pagamentos/pdv/status`, `atendimento/numero-whatsapp` (gancho `aposVendaConfirmada` existe, sem implementação) | PENDENTE |
-| PDV — exportar/importar pacote de pendências (ZIP, SHA-256 por operação) | formato do painel (manifesto.json, operacoes.json, autorizados.json) | PENDENTE |
-| PDV — login offline por PIN (tela) e definir PIN (tela) | — | PENDENTE (motor pronto) |
+| PDV — motor: PIN offline, autorização, fila SQLite, sincronização idempotente, catálogo (Item+Bin), carrinho, caixa, venda, pedido de venda | `POS Opening Entry`, `POS Invoice`, `POS Closing Entry`, `Sales Order`/`Customer`, `Synapse Producao Item`; `synapse_sincronizar_caixa`, `synapse_definir_pin` | IMPLEMENTADO e testado com simulação (JVM) |
+| PDV — telas: login offline por PIN, definir PIN, abrir/fechar caixa, catálogo+busca, carrinho (±qtd, remover, desconto geral), checkout (dinheiro com troco/cartão/Pix manual), fila (reenviar rejeitadas), estado de conexão | usa o motor acima | ESCRITAS, NÃO compiladas (Android) |
+| PDV — **ainda ausentes**: composição (Motor de Composição), produtos pesáveis (entrada de peso), preço livre/item genérico com supervisor, acréscimos de venda, vendedor, identificação (mesa/comanda), tela de pedido de venda, suspender venda, hortifrúti, exportar/importar pacote de pendências, NFC-e, cobrança Pix integrada | lógica de carrinho/payload já aceita preço livre, acréscimos e preenchimentos | PENDENTE |
 | Produção | `Synapse Producao Item`, `Synapse Composicao` | PENDENTE |
 | Unidades | `Warehouse`, `Bin`, `Stock Entry`, `Item Reorder` | PENDENTE |
 | Cadastros | `Customer`, `Supplier`, `Item`, `Employee`, `Bank Account`; `lyra/consultar|alterar|gerar-atributos|inativar`; `endereco/autocomplete` | PENDENTE |

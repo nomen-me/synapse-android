@@ -27,6 +27,8 @@ enum class Aba(val id: String, val titulo: String, val naMatriz: Boolean = true)
 /** Espelha MAPA_PAPEIS_SYNAPSE / PERMISSOES_TABS / tabsPermitidas() do painel. */
 object Perfis {
     const val ADMINISTRADOR = "Synapse Administrador"
+    /** Perfil do login offline por PIN: pela matriz do painel só enxerga o PDV (mais as áreas fora da matriz). */
+    const val OFFLINE = "Synapse Offline"
 
     val papeisSynapse = listOf(
         ADMINISTRADOR, "Lojista", "Gerente", "Sub gerente", "Operador de loja", "Vendedor", "Caixa", "Administração"
@@ -39,7 +41,8 @@ object Perfis {
         "Operador de loja" to setOf(Aba.DASHBOARD, Aba.PEDIDOS, Aba.ATENDIMENTO, Aba.CADASTROS),
         "Vendedor" to setOf(Aba.DASHBOARD, Aba.PEDIDOS, Aba.ATENDIMENTO, Aba.CADASTROS),
         "Caixa" to setOf(Aba.DASHBOARD, Aba.TEMA, Aba.PDV),
-        "Administração" to setOf(Aba.DASHBOARD, Aba.PEDIDOS, Aba.CADASTROS, Aba.CONSUMO)
+        "Administração" to setOf(Aba.DASHBOARD, Aba.PEDIDOS, Aba.CADASTROS, Aba.CONSUMO),
+        OFFLINE to setOf(Aba.PDV)
     )
 
     /** Primeira Role do usuário (na ordem em que o Ritmo devolve) que seja uma Role Synapse. */
@@ -76,7 +79,11 @@ object Perfis {
     }
 }
 
-data class Usuario(val email: String, val nome: String, val perfil: String, val roleFrappe: String) {
+data class Usuario(
+    val email: String, val nome: String, val perfil: String, val roleFrappe: String,
+    /** Sessão do login offline por PIN (sem sessão no Ritmo; só PDV). */
+    val offline: Boolean = false, val employee: String? = null
+) {
     val iniciais: String
         get() = nome.split(" ").filter { it.isNotBlank() }.take(2).joinToString("") { it.first().uppercase() }.ifEmpty { "?" }
 }

@@ -17,6 +17,9 @@ import me.nomen.synapse.data.SecureStore
 import me.nomen.synapse.data.SynapseEnv
 import me.nomen.synapse.data.criarHttpClient
 import me.nomen.synapse.domain.Usuario
+import me.nomen.synapse.pdv.LoginOffline
+import me.nomen.synapse.pdv.PdvCaixaService
+import me.nomen.synapse.pdv.PdvCatalogoRepository
 import me.nomen.synapse.pdv.PdvConfigRepository
 import me.nomen.synapse.pdv.PdvSincronizador
 import me.nomen.synapse.pdv.PdvStore
@@ -26,7 +29,7 @@ import me.nomen.synapse.pdv.SqlitePdvStore
 /** Composição manual das dependências (sem framework de DI nesta etapa). */
 class AppContainer(context: Context) {
     val secureStore = SecureStore(context)
-    val cookieJar = PersistentCookieJar(secureStore.prefs)
+    val cookieJar = PersistentCookieJar(secureStore.armazenamento)
     private val http = criarHttpClient(cookieJar)
 
     /** Emite quando uma chamada autenticada recebe 401/403; a sessão é então revalidada (não deslogada às cegas). */
@@ -55,6 +58,9 @@ class AppContainer(context: Context) {
     val pdvConfig = PdvConfigRepository(ritmo, pdvStore)
     val pdvSync = PdvSincronizador(ritmo, pdvConfig, pdvStore)
     val pinLockout = PinLockout()
+    val pdvCatalogo = PdvCatalogoRepository(ritmo, pdvConfig, pdvStore)
+    val pdvCaixa = PdvCaixaService(pdvStore, pdvSync, pdvCatalogo)
+    val loginOffline = LoginOffline(pdvConfig, pinLockout)
 
     val auth = AuthRepository(ritmo) {
         cookieJar.limpar(); ritmo.csrfToken = null

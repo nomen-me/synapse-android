@@ -1,6 +1,5 @@
 package me.nomen.synapse.data
 
-import android.content.SharedPreferences
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import okhttp3.Cookie
@@ -13,11 +12,18 @@ private class CookieSalvo(
     val path: String, val secure: Boolean, val httpOnly: Boolean, val hostOnly: Boolean
 )
 
+/** Armazenamento chave/valor mínimo (SharedPreferences cifrado no Android; mapa em memória nos testes JVM). */
+interface ArmazenamentoChaveValor {
+    fun ler(chave: String): String?
+    fun gravar(chave: String, valor: String)
+    fun remover(chave: String)
+}
+
 /**
  * Cookie jar que sobrevive ao fechamento do app (a sessão Frappe `sid` é o equivalente ao cookie
  * HttpOnly que o navegador guarda no painel web). Persistido em [SharedPreferences] criptografado.
  */
-class PersistentCookieJar(private val prefs: SharedPreferences) : CookieJar {
+class PersistentCookieJar(private val armazenamento: ArmazenamentoChaveValor) : CookieJar {
     private val trava = Any()
     private val cookies = mutableListOf<Cookie>()
 
@@ -40,18 +46,18 @@ class PersistentCookieJar(private val prefs: SharedPreferences) : CookieJar {
 
     fun limpar() = synchronized(trava) {
         cookies.clear()
-        prefs.edit().remove(CHAVE).apply()
+        armazenamento.remover(CHAVE)
     }
 
     private fun persistir() {
         val salvos = cookies.map {
             CookieSalvo(it.name, it.value, it.expiresAt, it.domain, it.path, it.secure, it.httpOnly, it.hostOnly)
         }
-        prefs.edit().putString(CHAVE, SynapseJson.encodeToString(ListSerializer(CookieSalvo.serializer()), salvos)).apply()
+        armazenamento.gravar(CHAVE, SynapseJson.encodeToString(ListSerializer(CookieSalvo.serializer()), salvos))
     }
 
     private fun carregar() {
-        val bruto = prefs.getString(CHAVE, null) ?: return
+        val bruto = armazenamento.ler(CHAVE) ?: return
         val salvos = runCatching {
             SynapseJson.decodeFromString(ListSerializer(CookieSalvo.serializer()), bruto)
         }.getOrDefault(emptyList())

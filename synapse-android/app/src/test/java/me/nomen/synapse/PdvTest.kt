@@ -36,17 +36,6 @@ import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.CopyOnWriteArrayList
 
-private class StoreEmMemoria : PdvStore {
-    val ops = LinkedHashMap<String, OperacaoFila>()
-    val cfg = HashMap<String, JsonObject>()
-    override suspend fun salvarOp(op: OperacaoFila) { ops[op.opId] = op }
-    override suspend fun obterOp(opId: String) = ops[opId]
-    override suspend fun todasOps() = ops.values.toList()
-    override suspend fun salvarConfig(chave: String, valor: JsonObject) { cfg[chave] = valor }
-    override suspend fun obterConfig(chave: String) = cfg[chave]
-    override suspend fun limparTudo() { ops.clear(); cfg.clear() }
-}
-
 class PinCryptoTest {
     @Test fun vetoresPbkdf2Sha256() {
         // Vetores de referência (hashlib.pbkdf2_hmac): garantem compatibilidade com o WebCrypto do painel.
@@ -97,13 +86,14 @@ class PdvSincronizadorTest {
             // O MockWebServer consulta peek() para políticas de socket (ex.: DISCONNECT_AT_START) antes de ler a requisição.
             override fun peek(): MockResponse = todasAsRespostas ?: super.peek()
             override fun dispatch(request: RecordedRequest): MockResponse {
-                val segs = request.requestUrl!!.pathSegments
+                val url = request.requestUrl ?: return todasAsRespostas ?: MockResponse().setResponseCode(400)
+                val segs = url.pathSegments
                 val corpo = request.body.snapshot().utf8()
-                chamadas += Triple(request.method!!, segs.joinToString("/"), corpo)
+                chamadas += Triple(request.method ?: "", segs.joinToString("/"), corpo)
                 todasAsRespostas?.let { return it }
                 val doctype = segs.getOrNull(2)
                 return when {
-                    request.method == "GET" && segs.getOrNull(1) == "resource" && request.requestUrl!!.queryParameter("filters") != null ->
+                    request.method == "GET" && segs.getOrNull(1) == "resource" && url.queryParameter("filters") != null ->
                         MockResponse().setBody(existentes[doctype]?.let { """{"data":[{"name":"$it"}]}""" } ?: """{"data":[]}""")
                     request.method == "GET" && segs.getOrNull(1) == "method" && segs.getOrNull(2) == "frappe.auth.get_logged_user" ->
                         MockResponse().setBody("""{"message":"caixa@loja.com"}""")

@@ -1,7 +1,7 @@
 # Synapse Painel — aplicativo Android nativo (Kotlin + Jetpack Compose)
 
-**Estado: ETAPA 3 de N — código-fonte escrito, NÃO COMPILADO, NÃO TESTADO em aparelho.**
-Implementado: login/sessão, perfis, Atendimento, Dashboard, Pedidos, motor do PDV offline (PIN, autorização, fila, sincronização). Pendente: telas do PDV, NFC-e/cobrança, pacote de pendências, Produção, Unidades, Cadastros, Fiscal, Integrações, Marketing, Tema, Consumo.
+**Estado: VERSÃO 0.4 — código-fonte escrito, NÃO COMPILADO, NÃO TESTADO em aparelho.**
+Implementado: login/sessão (inclui entrada offline por PIN), perfis, Atendimento, Dashboard, Pedidos, Consumo, PDV (motor testado + telas escritas). Pendente: partes do PDV listadas na matriz, Produção, Unidades, Cadastros, Fiscal, Integrações, Marketing, Tema da Loja. **Testes JVM: 86/86 aprovados; APK: não gerado.** Ver `RELATORIO_TESTES.md`, `ROTEIRO_INTEGRACAO_REAL.md`, `INVESTIGACAO_CONSUMO_501.md`.
 Ver `RELATORIO_TESTES.md` (o que foi e o que não foi verificado) e `MATRIZ_FUNCIONALIDADES.md`.
 
 Base: `synapse_painel_18-09t.html` (repositório `nomen-me/desenvolvimento`). O app é um cliente novo

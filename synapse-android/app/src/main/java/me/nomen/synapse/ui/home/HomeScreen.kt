@@ -66,6 +66,7 @@ import me.nomen.synapse.data.ClasseStatus
 import me.nomen.synapse.ui.atendimento.AtendimentoScreen
 import me.nomen.synapse.ui.consumo.ConsumoScreen
 import me.nomen.synapse.ui.dashboard.DashboardScreen
+import me.nomen.synapse.ui.pdv.PdvScreen
 import me.nomen.synapse.ui.pedidos.PedidosScreen
 
 private fun icone(aba: Aba): ImageVector = when (aba) {
@@ -157,6 +158,7 @@ fun HomeScreen(usuario: Usuario, onSair: () -> Unit) {
                         irParaAtendimento = { if (Aba.ATENDIMENTO in abas) idSelecionada = Aba.ATENDIMENTO.id }
                     )
                     Aba.PEDIDOS -> PedidosScreen(usuario, filtroPedidos, aoConsumirFiltro = { filtroPedidos = null })
+                    Aba.PDV -> PdvScreen(usuario)
                     Aba.CONSUMO -> ConsumoScreen(usuario)
                     Aba.ATENDIMENTO -> AtendimentoScreen()
                     else -> EmPreparoScreen(selecionada)

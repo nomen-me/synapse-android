@@ -76,12 +76,13 @@ class RitmoClient(
     // ---- recursos genéricos (contratos do painel: Ritmo.listar/obter/criar/atualizar/excluir) ----
 
     suspend fun listar(
-        doctype: String, campos: List<String> = listOf("name"), filtros: JsonElement? = null, limite: Int = 50
+        doctype: String, campos: List<String> = listOf("name"), filtros: JsonElement? = null, limite: Int = 50, inicio: Int = 0
     ): JsonObject {
         val params = mutableMapOf(
             "fields" to JsonArray(campos.map { JsonPrimitive(it) }).toString(),
             "limit_page_length" to limite.toString()
         )
+        if (inicio > 0) params["limit_start"] = inicio.toString()
         filtros?.let { params["filters"] = it.toString() }
         return requisitar("api/resource", doctype, params = params)
     }
@@ -99,6 +100,19 @@ class RitmoClient(
     suspend fun ritmoAlcancavel(): Boolean = try {
         requisitar("api/method/synapse_csrf_token", tentativasGet = 1); true
     } catch (e: kotlin.coroutines.cancellation.CancellationException) { throw e } catch (e: Exception) { false }
+
+    /** Todos os registros, em blocos de [pagina] (Ritmo.listarTodos do painel). */
+    suspend fun listarTodos(doctype: String, campos: List<String>, filtros: JsonElement? = null, pagina: Int = 50): List<JsonObject> {
+        val todos = ArrayList<JsonObject>()
+        var inicio = 0
+        while (true) {
+            val bloco = listar(doctype, campos, filtros, pagina, inicio).lista("data").mapNotNull { it as? JsonObject }
+            todos += bloco
+            if (bloco.size < pagina) break
+            inicio += pagina
+        }
+        return todos
+    }
 
     suspend fun obter(doctype: String, nome: String): JsonObject = requisitar("api/resource", doctype, nome)
     suspend fun criar(doctype: String, dados: JsonObject): JsonObject = requisitar("api/resource", doctype, metodo = "POST", corpo = dados)

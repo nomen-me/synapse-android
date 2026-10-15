@@ -20,6 +20,9 @@ class SqlitePdvStore(context: Context) : SQLiteOpenHelper(context, "synapse_pdv.
         db.execSQL("CREATE TABLE config(chave TEXT PRIMARY KEY, json TEXT NOT NULL)")
     }
 
+    // WAL: gravações atômicas e resistentes a queda de energia/fechamento do app no meio de uma escrita.
+    override fun onConfigure(db: SQLiteDatabase) { db.enableWriteAheadLogging() }
+
     override fun onUpgrade(db: SQLiteDatabase, antiga: Int, nova: Int) {}
 
     override suspend fun salvarOp(op: OperacaoFila) = withContext(Dispatchers.IO) {

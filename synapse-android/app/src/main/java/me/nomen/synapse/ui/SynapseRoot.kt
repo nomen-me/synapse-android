@@ -36,10 +36,13 @@ fun SynapseRoot(sessao: SessionViewModel = viewModel(factory = SessionViewModel.
                 }
             }
             is SessionState.SemDominio -> DominioScreen(erro = e.erro, onConfirmar = sessao::configurarDominio)
-            is SessionState.Deslogado -> LoginScreen(
-                dominio = e.dominio, erro = e.erro, entrando = e.entrando,
-                onEntrar = sessao::login, onTrocarLoja = sessao::trocarDominio
-            )
+            is SessionState.Deslogado -> {
+                androidx.compose.runtime.LaunchedEffect(e.dominio) { sessao.carregarOffline() }
+                LoginScreen(
+                    dominio = e.dominio, erro = e.erro, entrando = e.entrando, offline = e.offline,
+                    onEntrar = sessao::login, onEntrarOffline = sessao::entrarOffline, onTrocarLoja = sessao::trocarDominio
+                )
+            }
             is SessionState.Logado -> HomeScreen(usuario = e.usuario, onSair = sessao::logout)
         }
     }

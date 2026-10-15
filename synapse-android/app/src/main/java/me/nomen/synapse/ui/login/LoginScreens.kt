@@ -85,7 +85,10 @@ fun DominioScreen(erro: String?, onConfirmar: (String) -> Unit) {
 }
 
 @Composable
-fun LoginScreen(dominio: String, erro: String?, entrando: Boolean, onEntrar: (String, String) -> Unit, onTrocarLoja: () -> Unit) {
+fun LoginScreen(
+    dominio: String, erro: String?, entrando: Boolean, offline: me.nomen.synapse.ui.OfflineInfo?,
+    onEntrar: (String, String) -> Unit, onEntrarOffline: (String, String) -> Unit, onTrocarLoja: () -> Unit
+) {
     var email by rememberSaveable { mutableStateOf("") }
     var senha by rememberSaveable { mutableStateOf("") }
     var mostrarSenha by rememberSaveable { mutableStateOf(false) }
@@ -121,6 +124,33 @@ fun LoginScreen(dominio: String, erro: String?, entrando: Boolean, onEntrar: (St
                 Text("Entrando…")
             } else Text("Entrar")
         }
+        BlocoOffline(offline, entrando, onEntrarOffline)
         TextButton(onClick = onTrocarLoja, enabled = !entrando) { Text("Trocar de loja") }
     }
+}
+
+/** Entrada offline por PIN (só PDV). Só aparece com autorização do caixa já sincronizada neste aparelho. */
+@Composable
+private fun BlocoOffline(offline: me.nomen.synapse.ui.OfflineInfo?, entrando: Boolean, onEntrarOffline: (String, String) -> Unit) {
+    if (offline == null) return
+    var operador by rememberSaveable { mutableStateOf<String?>(null) }
+    var pin by rememberSaveable { mutableStateOf("") }
+    var escolhendo by rememberSaveable { mutableStateOf(false) }
+    Text("Sem internet? Entre com o PIN do caixa", style = MaterialTheme.typography.titleMedium)
+    if (offline.operadores.isEmpty()) {
+        Text(offline.diagnostico ?: "Nenhum operador disponível para entrar offline.", style = MaterialTheme.typography.bodyMedium)
+        return
+    }
+    val nomeEscolhido = offline.operadores.firstOrNull { it.first == operador }?.second
+    androidx.compose.material3.OutlinedButton(onClick = { escolhendo = true }, enabled = !entrando, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+        Text(nomeEscolhido ?: "Selecionar operador")
+    }
+    OutlinedTextField(
+        value = pin, onValueChange = { if (it.length <= 6 && it.all(Char::isDigit)) pin = it }, singleLine = true, enabled = !entrando,
+        label = { Text("PIN (6 dígitos)") }, visualTransformation = PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { operador?.let { onEntrarOffline(it, pin) } }), modifier = Modifier.fillMaxWidth()
+    )
+    Button(onClick = { operador?.let { onEntrarOffline(it, pin) } }, enabled = !entrando && operador != null, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text("Entrar offline") }
+    if (escolhendo) me.nomen.synapse.ui.SeletorDialog("Operador", offline.operadores, { operador = it; escolhendo = false }, { escolhendo = false })
 }

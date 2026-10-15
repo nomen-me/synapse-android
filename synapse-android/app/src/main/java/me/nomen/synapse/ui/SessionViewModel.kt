@@ -13,13 +13,18 @@ import me.nomen.synapse.AppContainer
 import me.nomen.synapse.SynapseApplication
 import me.nomen.synapse.data.SemConexaoException
 import me.nomen.synapse.data.SynapseEnv
+import me.nomen.synapse.domain.Perfis
 import me.nomen.synapse.domain.Usuario
+import me.nomen.synapse.pdv.ResultadoLoginOffline
 import kotlin.coroutines.cancellation.CancellationException
+
+/** Operadores que podem entrar offline (id, nome) ou o motivo de não haver nenhum. */
+class OfflineInfo(val operadores: List<Pair<String, String>>, val diagnostico: String?)
 
 sealed interface SessionState {
     data object Verificando : SessionState
     data class SemDominio(val erro: String? = null) : SessionState
-    data class Deslogado(val dominio: String, val erro: String? = null, val entrando: Boolean = false) : SessionState
+    data class Deslogado(val dominio: String, val erro: String? = null, val entrando: Boolean = false, val offline: OfflineInfo? = null) : SessionState
     data class Logado(val dominio: String, val usuario: Usuario) : SessionState
 }
 
@@ -107,8 +112,41 @@ class SessionViewModel(private val c: AppContainer) : ViewModel() {
         }
     }
 
+    /** Chamada pela tela de login: descobre se este terminal tem autorização local para entrar offline. */
+    fun carregarOffline() {
+        viewModelScope.launch {
+            val ops = c.loginOffline.operadoresDisponiveis().map { it.userId to it.nome }
+            val diag = if (ops.isEmpty()) c.loginOffline.diagnostico() else null
+            _estado.update { if (it is SessionState.Deslogado) it.copy(offline = OfflineInfo(ops, diag)) else it }
+        }
+    }
+
+    fun entrarOffline(userId: String, pin: String) {
+        val atual = _estado.value as? SessionState.Deslogado ?: return
+        if (loginEmAndamento) return
+        loginEmAndamento = true
+        _estado.value = atual.copy(erro = null, entrando = true)
+        viewModelScope.launch {
+            try {
+                when (val r = c.loginOffline.entrar(userId, pin)) {
+                    is ResultadoLoginOffline.Ok -> {
+                        val u = Usuario(r.operador.userId, r.operador.nome, Perfis.OFFLINE, r.operador.roles.firstOrNull() ?: "—", offline = true, employee = r.operador.employee)
+                        c.usuarioAtual = u
+                        _estado.value = SessionState.Logado(atual.dominio, u)
+                    }
+                    is ResultadoLoginOffline.Erro -> _estado.value = atual.copy(erro = r.mensagem, entrando = false)
+                }
+            } catch (e: CancellationException) { throw e } finally { loginEmAndamento = false }
+        }
+    }
+
     fun logout() {
         val atual = _estado.value as? SessionState.Logado ?: return
+        if (atual.usuario.offline) {   // sessão offline não tem sessão no Ritmo: não mexe em cookies
+            c.usuarioAtual = null
+            _estado.value = SessionState.Deslogado(atual.dominio)
+            return
+        }
         viewModelScope.launch {
             c.auth.logout()
             _estado.value = SessionState.Deslogado(atual.dominio)
@@ -118,7 +156,7 @@ class SessionViewModel(private val c: AppContainer) : ViewModel() {
     /** Chamada autenticada recebeu 401/403: confirma com o Ritmo antes de encerrar (403 pode ser só permissão). */
     private fun revalidar() {
         val atual = _estado.value as? SessionState.Logado ?: return
-        if (revalidando) return
+        if (atual.usuario.offline || revalidando) return
         revalidando = true
         viewModelScope.launch {
             try {
