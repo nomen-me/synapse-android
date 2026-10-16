@@ -1,0 +1,15 @@
+# Resultado REAL da execução — 2026-10-16 01:01 UTC
+# kotlinc info: kotlinc-jvm 2.0.20 (JRE 21.0.10+7-Ubuntu-124.04) (-language-version 2.0) | openjdk version "21.0.10" 2026-01-20 | JUnit 4.13.2 | node v22.22.2
+
+## ./scripts/rodar_testes_locais.sh
+Classes de teste: me.nomen.synapse.AtendimentoRepositoryTest me.nomen.synapse.CarrinhoTest me.nomen.synapse.ConsumoTest me.nomen.synapse.CookieJarTest me.nomen.synapse.DominioEPerfisTest me.nomen.synapse.LoginOfflineTest me.nomen.synapse.PdvAutorizacaoTest me.nomen.synapse.PdvFluxoCompletoTest me.nomen.synapse.PdvSincronizadorTest me.nomen.synapse.PedidosTest me.nomen.synapse.PinCryptoTest me.nomen.synapse.RitmoClientTest 
+JUnit version 4.13.2
+............................................................................................
+Time: 4.349
+
+OK (92 tests)
+
+## ./scripts/checar_viewmodels.sh
+TYPE-CHECK OK (ViewModels + AppContainer, contra stubs)
+## node docs/propostas/testar_monta_resposta.js
+OK: 4 cenários da proposta do nó "Monta resposta" (simulação; não é o n8n real)
